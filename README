@@ -1,0 +1,74 @@
+To compile on Unix based systems, use cc main.c.
+
+Usage example:
+
+	./checkcpf 12345678902
+	./checkcpf 10539423423 -q		for verbosity level quiet
+	./checkcpf 10539423423 -v		for verbosity level verbose
+	./checkcpf 10539423423 ... 12312312312 	to validate many CPFs at once
+
+
+The language that validation errors and usage errors are reported can be
+changed before compilation in the file config.h:
+
+	use #define LANGUAGE LANGUAGE_EN for English
+	 or #define LANGUAGE LANGUAGE_PT for Portuguese.
+	
+
+Valid CPFs have validation code 1. Invalid CPFs will have validation code
+greater than one that are the product of one ore more prime numbers, with
+witch factor having the following meaning:
+
+	too short 					2;
+	too long					3;
+	has non-numeric chars*				5;
+	unexpected value for 10th digit			7;
+	unexpected value for the 11th digit		11;
+	is blacklisted**				13.
+
+
+for instance:
+
+	33 means that the input is too long and has an unexpected 10th digit;
+	77 means that the input has unexpected 10th and 11th digits;
+	15 means that the input has non-numerical chars and is too long;
+	etc.
+
+
+	* If the input is greater than 11 characters, just the
+	first 11 will be validated in this regard;
+	
+	** All CPFs of the form XXXXXXXXXXX where X is a digit are
+	mathematically valid but are blacklisted. Other number in
+	the blacklist is 01234567890;
+
+	*** The fields ed10 and ed11 in the struct cpf_info will be set by
+	the validaor in the condition that the cpf first nine digits are
+	valid. You can know if they were set by examining the value of
+
+		info->fstnnc == -1 && info->len >= 9 || info->fstnnc > 8
+	
+	meaning that (there are no non-numeric chars and the length of the
+	input is greater than 9) or the index of the first non numeric char
+	is greater than 8
+	
+
+
+Information about the 10th & 11th digit validation:
+
+	A valid CPF is a string of 11 digits, says: d1, d2, d3,..., d11, both
+	d10 and d11 are redundant and can be calculated using the first 9 by
+
+		d10 = (11 - (10 * d1 + 9 * d2 + ... + 2 * d9) % 11) % 10 and
+		d11 = (11 - (11 * d1 + 10 * d2 + ... + 2 * d10) % 11) % 10.
+
+	If the given input has sufficient length, the program will calculate 
+	the expected 10th digit ed10 and expected ed11 for given 
+	d1, d2, ..., d9 and check if d10 id equal to ed10 and d11 is equals 
+	to ed11.
+
+	Just mathematically, the string 11111111111 would be considered a
+	valid CPF number. But the CPFs where all digits are equal are generally
+	considered invalid. And this program uses a blacklist system to mark
+	these as invalid.
+
